@@ -26,5 +26,8 @@ setup(
     """
     [ckan.plugins]
     fso=ckanext.fso.plugins:FsoHarvest
+    fso_harvester=ckanext.fso.harvesters:FSOHarvester
+    [paste.paster_command]
+    harvester=ckanext.fso.commands.harvester:Harvester
     """,
 )
