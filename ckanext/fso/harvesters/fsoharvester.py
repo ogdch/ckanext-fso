@@ -24,6 +24,9 @@ class FSOHarvester(HarvesterBase):
     METADATA_FILE_URL = "http://www.bfs.admin.ch/xmlns/opendata/BFS_OGD_metadata.xml"
     FILES_BASE_URL = "http://www.bfs.admin.ch/xmlns/opendata/"
 
+    config = {
+        'user': u'admin'
+    }
 
     def info(self):
         return {
@@ -83,6 +86,13 @@ class FSOHarvester(HarvesterBase):
     def import_stage(self, harvest_object):
         log.debug('In FSOHarvester import_stage')
 
+        # context = {'model': model, 'user': c.user}
+        # try:
+        #     user = get_action('user_show')(context, {'id': 'harvest'})
+        # except NotFound,e:
+        #     log.error('User not found')
+
+
         if not harvest_object:
             log.error('No harvest object received')
             return False
@@ -92,15 +102,35 @@ class FSOHarvester(HarvesterBase):
             return False
 
         try:
-            package_dict = {}
+            package_dict = {
+                'title': harvest_object.guid,
+                'url': 'http://pkstudio.ch/data.json',
+                'notes': 'some description',
+                'author': 'some author',
+                'maintainer': 'some maintainer',
+                'maintainer_email': 'ogd@liip.ch',
+                'resources': []
+            }
+
+            package_dict['resources'].append({
+                'url': 'http://pkstudio.ch/data.json',
+                'format': 'application/json',
+                'description': 'a sample description for this resource'
+                })
+
             package_dict['id'] = harvest_object.guid
-            package_dict['name'] = harvest_object.guid
-            package_dict['title'] = harvest_object.guid
+            package_dict['name'] = self._gen_new_name(package_dict['title'])
+
+            user = model.User.get(u'admin')
+            package = model.Package.get(package_dict['id'])
+            pkg_role = model.PackageRole(package=package, user=user, role=model.Role.ADMIN)
+
+            result = self._create_or_update_package(package_dict, harvest_object)
 
             # dataset_url = json.loads(harvest_object.content['metadata'])['datasetID']
             # package_dict['name'] = json.loads(harvest_object.content['metadata'])['datasetID']
 
         except Exception, e:
             log.exception(e)
-
-        return self._create_or_update_package(package_dict, harvest_object)
+        return True
+        # return self._create_or_update_package(package_dict, harvest_object)
