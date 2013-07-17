@@ -44,41 +44,50 @@ class FSOHarvester(HarvesterBase):
 
         ids = []
         for package in etree.fromstring(metadata_file.data):
-            for dataset in package:
-                id = dataset.get('datasetID')
-                obj = HarvestObject(
-                    guid = id,
-                    job = harvest_job,
-                    content = json.dumps({
-                        'datasetID': id,
-                        'url': 'http://pkstudio.ch/data.json'
-                    })
-                )
-                obj.save()
-                log.debug('adding ' + id + ' to the queue')
-                ids.append(obj.id)
+
+            # Get the german dataset if one is available, otherwise get the first one
+            datasets = package.xpath("dataset[@xml:lang='de']")
+            if len(datasets) != 0:
+                dataset = datasets[0]
+            else:
+                dataset = package.find('dataset')
+
+            dataset_id = dataset.get('datasetID')
+
+            metadata = {
+                'datasetID': dataset_id,
+                'title': dataset.find('title').text,
+                'resources': []
+            }
+
+            metadata['resources'].append({
+                'url': dataset.find('resource').find('url').text,
+                'name': dataset.find('resource').find('name').text,
+                'format': 'XLS'
+                })
+
+            obj = HarvestObject(
+                guid = dataset_id,
+                job = harvest_job,
+                content = json.dumps(metadata)
+            )
+            obj.save()
+            log.debug('adding ' + dataset_id + ' to the queue')
+            ids.append(obj.id)
+
         return ids
 
     def fetch_stage(self, harvest_object):
         log.debug('In FSOHarvester fetch_stage')
 
         # Get the URL
-        url = json.loads(harvest_object.content)['url']
         datasetID = json.loads(harvest_object.content)['datasetID']
         log.debug(harvest_object.content)
 
         # Get contents
-        http = urllib3.PoolManager()
         try:
-            file = http.request('GET', url)
-            # metadata = harvest_object.content
-            # harvest_object.content = {
-            #     'metadata': metadata,
-            #     'file': file.read()
-            # }
-            harvest_object.content = file.read()
             harvest_object.save()
-            log.debug('successfully downloaded and saved ' + datasetID)
+            log.debug('successfully processed ' + datasetID)
             return True
         except Exception, e:
             log.exception(e)
@@ -86,25 +95,15 @@ class FSOHarvester(HarvesterBase):
     def import_stage(self, harvest_object):
         log.debug('In FSOHarvester import_stage')
 
-        # context = {'model': model, 'user': c.user}
-        # try:
-        #     user = get_action('user_show')(context, {'id': 'harvest'})
-        # except NotFound,e:
-        #     log.error('User not found')
-
-
         if not harvest_object:
             log.error('No harvest object received')
             return False
 
-        if harvest_object.content is None:
-            log.error('No harvest object content received')
-            return False
-
         try:
+            metadata = json.loads(harvest_object.content)
+
             package_dict = {
-                'title': harvest_object.guid,
-                'url': 'http://pkstudio.ch/data.json',
+                'title': metadata['title'],
                 'notes': 'some description',
                 'author': 'some author',
                 'maintainer': 'some maintainer',
@@ -112,11 +111,8 @@ class FSOHarvester(HarvesterBase):
                 'resources': []
             }
 
-            package_dict['resources'].append({
-                'url': 'http://pkstudio.ch/data.json',
-                'format': 'application/json',
-                'description': 'a sample description for this resource'
-                })
+            for resource in metadata['resources']:
+                package_dict['resources'].append(resource)
 
             package_dict['id'] = harvest_object.guid
             package_dict['name'] = self._gen_new_name(package_dict['title'])
@@ -127,10 +123,6 @@ class FSOHarvester(HarvesterBase):
 
             result = self._create_or_update_package(package_dict, harvest_object)
 
-            # dataset_url = json.loads(harvest_object.content['metadata'])['datasetID']
-            # package_dict['name'] = json.loads(harvest_object.content['metadata'])['datasetID']
-
         except Exception, e:
             log.exception(e)
         return True
-        # return self._create_or_update_package(package_dict, harvest_object)
