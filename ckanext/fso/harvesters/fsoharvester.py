@@ -63,13 +63,13 @@ class FSOHarvester(HarvesterBase):
 
             # Adding term translations to the metadata
             for dataset in package:
-                # if dataset.get('datasetID') != base_dataset.get('datasetID'):
-                metadata['translations'].append({
-                    'lang_code': dataset.get('{http://www.w3.org/XML/1998/namespace}lang'),
-                    'term': base_dataset.find('title').text,
-                    'term_translation': dataset.find('title').text
-                    })
-                log.debug(json.dumps(dataset.get('{http://www.w3.org/XML/1998/namespace}lang')))
+                if dataset.get('datasetID') != base_dataset.get('datasetID'):
+                    metadata['translations'].append({
+                        'lang_code': dataset.get('{http://www.w3.org/XML/1998/namespace}lang'),
+                        'term': base_dataset.find('title').text,
+                        'term_translation': dataset.find('title').text
+                        })
+                    log.debug(json.dumps(dataset.get('{http://www.w3.org/XML/1998/namespace}lang')))
 
             # Adding resources to the dataset
             metadata['resources'].append({
