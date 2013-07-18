@@ -23,6 +23,12 @@ class FSOHarvester(HarvesterBase):
 
     METADATA_FILE_URL = "http://www.bfs.admin.ch/xmlns/opendata/BFS_OGD_metadata.xml"
     FILES_BASE_URL = "http://www.bfs.admin.ch/xmlns/opendata/"
+    GROUPS = {
+        'de': ['Bevölkerung', 'Politik'],
+        'fr': ['Population', 'Politique'],
+        'it': ['Popolazione', 'Politica'],
+        'en': ['Population', 'Politics']
+    }
 
     config = {
         'user': u'admin'
@@ -64,12 +70,28 @@ class FSOHarvester(HarvesterBase):
                 'license_id': base_dataset.find('licence').text,
                 'translations': [],
                 'resources': [],
-                'tags': []
+                'tags': [],
+                'groups': []
             }
 
             # Assinging tags to the dataset
             for tag in base_dataset.find('tags').findall('tag'):
                 metadata['tags'].append(tag.text)
+
+            # Assigning a group to the dataset
+            if base_dataset.find('groups').find('group').text[0:2] == "01":
+                metadata['groups'].append(self.GROUPS['de'][0])
+            elif base_dataset.find('groups').find('group').text[0:2] == "17":
+                metadata['groups'].append(self.GROUPS['de'][1])
+
+            # Adding term translations for the groups
+            for key, lang in self.GROUPS.iteritems():
+                for idx, group in enumerate(self.GROUPS[key]):
+                    metadata['translations'].append({
+                        'lang_code': key,
+                        'term': self.GROUPS['de'][idx],
+                        'term_translation': group
+                        })
 
 
             for dataset in package:                
@@ -99,6 +121,7 @@ class FSOHarvester(HarvesterBase):
                     #             'term': metadata['tags'][idx],
                     #             'term_translation': tag.text
                     #             })
+
 
 
             obj = HarvestObject(
@@ -141,6 +164,24 @@ class FSOHarvester(HarvesterBase):
             package_dict['name'] = self._gen_new_name(package_dict['title'])
 
             user = model.User.get(u'admin')
+            context = {
+                'model': model,
+                'session': Session,
+                'user': u'admin'
+                }
+
+            for group_name in package_dict['groups']:
+                try:
+                    data_dict = {
+                        'id': group_name,
+                        'name': self._gen_new_name(group_name),
+                        'title': group_name
+                        }
+                    group_id = get_action('group_show')(context, data_dict)['id']
+                except:
+                    group = get_action('group_create')(context, data_dict)
+                    log.info('created the group ' + group['id'])
+
             package = model.Package.get(package_dict['id'])
             pkg_role = model.PackageRole(package=package, user=user, role=model.Role.ADMIN)
 
@@ -148,11 +189,6 @@ class FSOHarvester(HarvesterBase):
 
             # Add the translations to the term_translations table
             for translation in package_dict['translations']:
-                context = {
-                    'model': model,
-                    'session': Session,
-                    'user': u'admin'
-                }
                 action.update.term_translation_update(context, translation)
             Session.commit()
 
