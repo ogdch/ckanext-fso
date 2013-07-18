@@ -62,14 +62,26 @@ class FSOHarvester(HarvesterBase):
                 'maintainer': base_dataset.find('maintainer').text,
                 'maintainer_email': base_dataset.find('maintainer_email').text,
                 'translations': [],
-                'resources': []
+                'resources': [],
+                'tags': []
             }
 
-            # Adding term translations to the metadata
-            for dataset in package:
-                if dataset.get('datasetID') != base_dataset.get('datasetID'):
-                    keys = ['title', 'notes', 'author', 'maintainer']
+            # Assinging tags to the dataset
+            for tag in base_dataset.find('tags').findall('tag'):
+                metadata['tags'].append(tag.text)
 
+
+            for dataset in package:                
+                if dataset.get('datasetID') != base_dataset.get('datasetID'):
+                    # Adding resources to the dataset
+                    metadata['resources'].append({
+                        'url': dataset.find('resource').find('url').text,
+                        'name': dataset.find('resource').find('name').text,
+                        'format': 'XLS'
+                        })
+
+                    # Adding term translations to the metadata
+                    keys = ['title', 'notes', 'author', 'maintainer']
                     for key in keys:
                         if base_dataset.find(key).text and dataset.find(key).text:
                             metadata['translations'].append({
@@ -78,13 +90,15 @@ class FSOHarvester(HarvesterBase):
                                 'term_translation': dataset.find(key).text
                                 })
 
-            # Adding resources to the dataset
-            for dataset in package:
-                metadata['resources'].append({
-                    'url': dataset.find('resource').find('url').text,
-                    'name': dataset.find('resource').find('name').text,
-                    'format': 'XLS'
-                    })
+                    # tags term translations (NEEDS TO BE ENABLED LATER WHEN THE METADATA IS CORRECT)
+                    # for idx, tag in enumerate(dataset.find('tags').iter('tag')):
+                    #     if tag.text and metadata['tags'][idx]:
+                    #         metadata['translations'].append({
+                    #             'lang_code': dataset.get('{http://www.w3.org/XML/1998/namespace}lang'),
+                    #             'term': metadata['tags'][idx],
+                    #             'term_translation': tag.text
+                    #             })
+
 
             obj = HarvestObject(
                 guid = dataset_id,
