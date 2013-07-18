@@ -57,6 +57,10 @@ class FSOHarvester(HarvesterBase):
             metadata = {
                 'datasetID': dataset_id,
                 'title': base_dataset.find('title').text,
+                'notes': base_dataset.find('notes').text,
+                'author': base_dataset.find('author').text,
+                'maintainer': base_dataset.find('maintainer').text,
+                'maintainer_email': base_dataset.find('maintainer_email').text,
                 'translations': [],
                 'resources': []
             }
@@ -64,12 +68,15 @@ class FSOHarvester(HarvesterBase):
             # Adding term translations to the metadata
             for dataset in package:
                 if dataset.get('datasetID') != base_dataset.get('datasetID'):
-                    metadata['translations'].append({
-                        'lang_code': dataset.get('{http://www.w3.org/XML/1998/namespace}lang'),
-                        'term': base_dataset.find('title').text,
-                        'term_translation': dataset.find('title').text
-                        })
-                    log.debug(json.dumps(dataset.get('{http://www.w3.org/XML/1998/namespace}lang')))
+                    keys = ['title', 'notes', 'author', 'maintainer']
+
+                    for key in keys:
+                        if base_dataset.find(key).text and dataset.find(key).text:
+                            metadata['translations'].append({
+                                'lang_code': dataset.get('{http://www.w3.org/XML/1998/namespace}lang'),
+                                'term': base_dataset.find(key).text,
+                                'term_translation': dataset.find(key).text
+                                })
 
             # Adding resources to the dataset
             for dataset in package:
@@ -113,16 +120,7 @@ class FSOHarvester(HarvesterBase):
             return False
 
         try:
-            metadata = json.loads(harvest_object.content)
-
-            package_dict = {
-                'title': metadata['title'],
-                'notes': 'some description',
-                'author': 'some author',
-                'maintainer': 'some maintainer',
-                'maintainer_email': 'ogd@liip.ch',
-                'resources': metadata['resources']
-            }
+            package_dict = json.loads(harvest_object.content)
 
             package_dict['id'] = harvest_object.guid
             package_dict['name'] = self._gen_new_name(package_dict['title'])
@@ -134,7 +132,7 @@ class FSOHarvester(HarvesterBase):
             result = self._create_or_update_package(package_dict, harvest_object)
 
             # Add the translations to the term_translations table
-            for translation in metadata['translations']:
+            for translation in package_dict['translations']:
                 context = {
                     'model': model,
                     'session': Session,
