@@ -72,11 +72,12 @@ class FSOHarvester(HarvesterBase):
                     log.debug(json.dumps(dataset.get('{http://www.w3.org/XML/1998/namespace}lang')))
 
             # Adding resources to the dataset
-            metadata['resources'].append({
-                'url': base_dataset.find('resource').find('url').text,
-                'name': base_dataset.find('resource').find('name').text,
-                'format': 'XLS'
-                })
+            for dataset in package:
+                metadata['resources'].append({
+                    'url': dataset.find('resource').find('url').text,
+                    'name': dataset.find('resource').find('name').text,
+                    'format': 'XLS'
+                    })
 
             obj = HarvestObject(
                 guid = dataset_id,
@@ -120,11 +121,8 @@ class FSOHarvester(HarvesterBase):
                 'author': 'some author',
                 'maintainer': 'some maintainer',
                 'maintainer_email': 'ogd@liip.ch',
-                'resources': []
+                'resources': metadata['resources']
             }
-
-            for resource in metadata['resources']:
-                package_dict['resources'].append(resource)
 
             package_dict['id'] = harvest_object.guid
             package_dict['name'] = self._gen_new_name(package_dict['title'])
