@@ -6,7 +6,7 @@ from lxml import etree
 from ckan.lib.base import c
 from ckan import model
 from ckan.model import Session, Package
-from ckan.logic import ValidationError, NotFound, get_action
+from ckan.logic import ValidationError, NotFound, get_action, action
 from ckan.lib.helpers import json
 
 from ckanext.harvest.model import HarvestJob, HarvestObject, HarvestGatherError, \
@@ -46,23 +46,35 @@ class FSOHarvester(HarvesterBase):
         for package in etree.fromstring(metadata_file.data):
 
             # Get the german dataset if one is available, otherwise get the first one
-            datasets = package.xpath("dataset[@xml:lang='de']")
-            if len(datasets) != 0:
-                dataset = datasets[0]
+            base_datasets = package.xpath("dataset[@xml:lang='de']")
+            if len(base_datasets) != 0:
+                base_dataset = base_datasets[0]
             else:
-                dataset = package.find('dataset')
+                base_dataset = package.find('dataset')
 
-            dataset_id = dataset.get('datasetID')
+            dataset_id = base_dataset.get('datasetID')
 
             metadata = {
                 'datasetID': dataset_id,
-                'title': dataset.find('title').text,
+                'title': base_dataset.find('title').text,
+                'translations': [],
                 'resources': []
             }
 
+            # Adding term translations to the metadata
+            for dataset in package:
+                # if dataset.get('datasetID') != base_dataset.get('datasetID'):
+                metadata['translations'].append({
+                    'lang_code': dataset.get('{http://www.w3.org/XML/1998/namespace}lang'),
+                    'term': base_dataset.find('title').text,
+                    'term_translation': dataset.find('title').text
+                    })
+                log.debug(json.dumps(dataset.get('{http://www.w3.org/XML/1998/namespace}lang')))
+
+            # Adding resources to the dataset
             metadata['resources'].append({
-                'url': dataset.find('resource').find('url').text,
-                'name': dataset.find('resource').find('name').text,
+                'url': base_dataset.find('resource').find('url').text,
+                'name': base_dataset.find('resource').find('name').text,
                 'format': 'XLS'
                 })
 
@@ -122,6 +134,16 @@ class FSOHarvester(HarvesterBase):
             pkg_role = model.PackageRole(package=package, user=user, role=model.Role.ADMIN)
 
             result = self._create_or_update_package(package_dict, harvest_object)
+
+            # Add the translations to the term_translations table
+            for translation in metadata['translations']:
+                context = {
+                    'model': model,
+                    'session': Session,
+                    'user': u'admin'
+                }
+                action.update.term_translation_update(context, translation)
+            Session.commit()
 
         except Exception, e:
             log.exception(e)
