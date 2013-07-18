@@ -61,6 +61,7 @@ class FSOHarvester(HarvesterBase):
                 'author': base_dataset.find('author').text,
                 'maintainer': base_dataset.find('maintainer').text,
                 'maintainer_email': base_dataset.find('maintainer_email').text,
+                'license_id': base_dataset.find('licence').text,
                 'translations': [],
                 'resources': [],
                 'tags': []
