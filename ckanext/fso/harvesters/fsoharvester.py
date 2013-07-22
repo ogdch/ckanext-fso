@@ -24,6 +24,12 @@ class FSOHarvester(HarvesterBase):
     METADATA_FILE_URL = "http://www.bfs.admin.ch/xmlns/opendata/BFS_OGD_metadata.xml"
     FILES_BASE_URL = "http://www.bfs.admin.ch/xmlns/opendata/"
     HARVEST_USER = u'harvest'
+    ORGANIZATION = {
+        'de': u'Bundesamt für Statistik',
+        'fr': u'Office fédéral de la statistique',
+        'it': u'Ufficio federale di statistica',
+        'en': u'Swiss Federal Statistical Office',
+    }
     GROUPS = {
         'de': [u'Bevölkerung', u'Politik'],
         'fr': [u'Population', u'Politique'],
@@ -252,6 +258,7 @@ class FSOHarvester(HarvesterBase):
                 'user': self.HARVEST_USER
                 }
 
+            # Find or create group the dataset should get assigned to
             for group_name in package_dict['groups']:
                 try:
                     data_dict = {
@@ -263,6 +270,19 @@ class FSOHarvester(HarvesterBase):
                 except:
                     group = get_action('group_create')(context, data_dict)
                     log.info('created the group ' + group['id'])
+
+            # Find or create the organization the dataset should get assigned to
+            try:
+                data_dict = {
+                    'permission': 'edit_group',
+                    'id': self._gen_new_name(self.ORGANIZATION['de']),
+                    'name': self._gen_new_name(self.ORGANIZATION['de']),
+                    'title': self.ORGANIZATION['de']
+                }
+                package_dict['owner_org'] = get_action('organization_show')(context, data_dict)['id']
+            except:
+                organization = get_action('organization_create')(context, data_dict)
+                package_dict['owner_org'] = organization['id']
 
             package = model.Package.get(package_dict['id'])
             pkg_role = model.PackageRole(package=package, user=user, role=model.Role.ADMIN)
