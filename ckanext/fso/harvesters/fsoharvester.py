@@ -23,6 +23,7 @@ class FSOHarvester(HarvesterBase):
 
     METADATA_FILE_URL = "http://www.bfs.admin.ch/xmlns/opendata/BFS_OGD_metadata.xml"
     FILES_BASE_URL = "http://www.bfs.admin.ch/xmlns/opendata/"
+    HARVEST_USER = u'harvest'
     GROUPS = {
         'de': [u'Bevölkerung', u'Politik'],
         'fr': [u'Population', u'Politique'],
@@ -244,11 +245,11 @@ class FSOHarvester(HarvesterBase):
             package_dict['id'] = harvest_object.guid
             package_dict['name'] = self._gen_new_name(package_dict['title'])
 
-            user = model.User.get(u'admin')
+            user = model.User.get(self.HARVEST_USER)
             context = {
                 'model': model,
                 'session': Session,
-                'user': u'admin'
+                'user': self.HARVEST_USER
                 }
 
             for group_name in package_dict['groups']:
