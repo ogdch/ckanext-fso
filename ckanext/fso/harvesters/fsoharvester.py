@@ -152,16 +152,17 @@ class FSOHarvester(HarvesterBase):
                         })
 
 
-            for dataset in package:                
+            for dataset in package:
+                
+                # Adding resources to the dataset
+                metadata['resources'].append({
+                    'url': dataset.find('resource').find('url').text,
+                    'name': dataset.find('resource').find('name').text,
+                    'format': 'XLS'
+                    })
+
                 if dataset.get('datasetID') != base_dataset.get('datasetID'):
                     lang = dataset.get('{http://www.w3.org/XML/1998/namespace}lang')
-
-                    # Adding resources to the dataset
-                    metadata['resources'].append({
-                        'url': dataset.find('resource').find('url').text,
-                        'name': dataset.find('resource').find('name').text,
-                        'format': 'XLS'
-                        })
 
                     # Adding term translations to the metadata
                     keys = ['title', 'author', 'maintainer']
