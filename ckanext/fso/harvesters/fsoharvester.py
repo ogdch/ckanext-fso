@@ -24,10 +24,40 @@ class FSOHarvester(HarvesterBase):
     METADATA_FILE_URL = "http://www.bfs.admin.ch/xmlns/opendata/BFS_OGD_metadata.xml"
     FILES_BASE_URL = "http://www.bfs.admin.ch/xmlns/opendata/"
     GROUPS = {
-        'de': ['Bevölkerung', 'Politik'],
-        'fr': ['Population', 'Politique'],
-        'it': ['Popolazione', 'Politica'],
-        'en': ['Population', 'Politics']
+        'de': [u'Bevölkerung', u'Politik'],
+        'fr': [u'Population', u'Politique'],
+        'it': [u'Popolazione', u'Politica'],
+        'en': [u'Population', u'Politics']
+    }
+    NOTES_HELPERS = {
+        'de': {
+            'link_to_fso_population': u'http://www.bfs.admin.ch/bfs/portal/de/index/themen/01/01/keyw.html',
+            'link_text_to_fso_population': u'Das Thema Bevölkerung im Bundesamt für Statistik',
+            'link_to_fso_politics': u'http://www.bfs.admin.ch/bfs/portal/de/index/themen/17/01/keyw.html',
+            'link_text_to_fso_politics': u'Das Thema Politik im Bundesamt für Statistik',
+            'inquiry_period': u'Periode der Erhebung'
+        },
+        'fr': {
+            'link_to_fso_population': u'http://www.bfs.admin.ch/bfs/portal/fr/index/themen/01/01/keyw.html',
+            'link_text_to_fso_population': u"Le sujet de la population à l'Office fédéral de la statistique",
+            'link_to_fso_politics': u'http://www.bfs.admin.ch/bfs/portal/de/index/themen/17/01/keyw.html',
+            'link_text_to_fso_politics': u"Le sujet de la politique à l'Office fédéral de la statistique",
+            'inquiry_period': u'Période de collection'
+        },
+        'it': {
+            'link_to_fso_population': u'it_http://www.bfs.admin.ch/bfs/portal/de/index/themen/01/01/keyw.html',
+            'link_text_to_fso_population': u'it_Das Thema Bevölkerung im Bundesamt für Statistik',
+            'link_to_fso_politics': u'it_http://www.bfs.admin.ch/bfs/portal/de/index/themen/17/01/keyw.html',
+            'link_text_to_fso_politics': u'it_Das Thema Politik im Bundesamt für Statistik',
+            'inquiry_period': u'it_Periode der Erhebung'
+        },
+        'en': {
+            'link_to_fso_population': u'http://www.bfs.admin.ch/bfs/portal/en/index/themen/01/01/keyw.html',
+            'link_text_to_fso_population': u'en_The topic population at the Swiss Federal Statistical Office',
+            'link_to_fso_politics': u'en_http://www.bfs.admin.ch/bfs/portal/de/index/themen/17/01/keyw.html',
+            'link_text_to_fso_politics': u'en_The topic politics at the Swiss Federal Statistical Office',
+            'inquiry_period': u'en_Inquiry period'
+        }
     }
 
     config = {
@@ -49,7 +79,8 @@ class FSOHarvester(HarvesterBase):
         metadata_file = http.request('GET', self.METADATA_FILE_URL)
 
         ids = []
-        for package in etree.fromstring(metadata_file.data):
+        parser = etree.XMLParser(encoding='utf-8')
+        for package in etree.fromstring(metadata_file.data, parser=parser):
 
             # Get the german dataset if one is available, otherwise get the first one
             base_datasets = package.xpath("dataset[@xml:lang='de']")
@@ -84,6 +115,22 @@ class FSOHarvester(HarvesterBase):
             elif base_dataset.find('groups').find('group').text[0:2] == "17":
                 metadata['groups'].append(self.GROUPS['de'][1])
 
+            # Assigning notes additions
+            if base_dataset.find('notes').text == None:
+                metadata['notes'] = ''
+            if base_dataset.find('coverage').text:
+                metadata['notes'] += '\n  ' + self.NOTES_HELPERS['de']['inquiry_period'] + ' ' + base_dataset.find('coverage').text
+
+            if base_dataset.find('groups').find('group').text[0:2] == "01":
+                metadata['notes'] += '\n  ' + "[" + self.NOTES_HELPERS['de']['link_text_to_fso_population'] +\
+                "](" + self.NOTES_HELPERS['de']['link_to_fso_population'] + ")"
+
+            elif base_dataset.find('groups').find('group').text[0:2] == "17":
+                metadata['notes'] += '\n  ' + "[" + self.NOTES_HELPERS['de']['link_text_to_fso_politics'] +\
+                "](" + self.NOTES_HELPERS['de']['link_to_fso_politics'] + ")"
+            else:
+                log.debug(base_dataset.find('groups').find('group').text[0:2])
+
             # Adding term translations for the groups
             for key, lang in self.GROUPS.iteritems():
                 for idx, group in enumerate(self.GROUPS[key]):
@@ -96,6 +143,8 @@ class FSOHarvester(HarvesterBase):
 
             for dataset in package:                
                 if dataset.get('datasetID') != base_dataset.get('datasetID'):
+                    lang = dataset.get('{http://www.w3.org/XML/1998/namespace}lang')
+
                     # Adding resources to the dataset
                     metadata['resources'].append({
                         'url': dataset.find('resource').find('url').text,
@@ -104,24 +153,39 @@ class FSOHarvester(HarvesterBase):
                         })
 
                     # Adding term translations to the metadata
-                    keys = ['title', 'notes', 'author', 'maintainer']
+                    keys = ['title', 'author', 'maintainer']
                     for key in keys:
                         if base_dataset.find(key).text and dataset.find(key).text:
                             metadata['translations'].append({
-                                'lang_code': dataset.get('{http://www.w3.org/XML/1998/namespace}lang'),
+                                'lang_code': lang,
                                 'term': base_dataset.find(key).text,
                                 'term_translation': dataset.find(key).text
                                 })
 
-                    # tags term translations (NEEDS TO BE ENABLED LATER WHEN THE METADATA IS CORRECT)
-                    # for idx, tag in enumerate(dataset.find('tags').iter('tag')):
-                    #     if tag.text and metadata['tags'][idx]:
-                    #         metadata['translations'].append({
-                    #             'lang_code': dataset.get('{http://www.w3.org/XML/1998/namespace}lang'),
-                    #             'term': metadata['tags'][idx],
-                    #             'term_translation': tag.text
-                    #             })
+                    # Adding term translations for notes
+                    notes_term_translation = ''
+                    if base_dataset.find('notes').text and dataset.find('notes').text:
+                        notes_term_translation = dataset.find('notes').text
 
+                    if base_dataset.find('coverage').text:
+                        log.debug(base_dataset.find('coverage').text)
+
+                        notes_term_translation += '\n  ' + self.NOTES_HELPERS[lang]['inquiry_period'] + ' ' +\
+                        base_dataset.find('coverage').text
+
+                    if base_dataset.find('groups').find('group').text[0:2] == "01":
+                        notes_term_translation += '\n  ' + "[" + self.NOTES_HELPERS[lang]['link_text_to_fso_population'] +\
+                        "](" + self.NOTES_HELPERS[lang]['link_to_fso_population'] + ")"
+
+                    elif base_dataset.find('groups').find('group').text[0:2] == "17":
+                        notes_term_translation += '\n  ' + "[" + self.NOTES_HELPERS[lang]['link_text_to_fso_politics'] +\
+                        "](" + self.NOTES_HELPERS[lang]['link_to_fso_politics'] + ")"
+
+                    metadata['translations'].append({
+                        'lang_code': lang,
+                        'term': metadata['notes'],
+                        'term_translation': notes_term_translation
+                        })
 
 
             obj = HarvestObject(
