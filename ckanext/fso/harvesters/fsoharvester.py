@@ -59,6 +59,12 @@ class FSOHarvester(HarvesterBase):
             'inquiry_period': u'en_Inquiry period'
         }
     }
+    PUBLISHED_AT = {
+        'de': u'Veröffentlicht:',
+        'fr': u'fr_Veröffentlicht:',
+        'it': u'it_Veröffentlicht:',
+        'en': u'Published:'
+    }
 
     config = {
         'user': u'admin'
@@ -121,6 +127,11 @@ class FSOHarvester(HarvesterBase):
             if base_dataset.find('coverage').text:
                 metadata['notes'] += '\n  ' + self.NOTES_HELPERS['de']['inquiry_period'] + ' ' + base_dataset.find('coverage').text
 
+            # Published At -> Notes
+            if base_dataset.find('published').text:
+                metadata['notes'] += '\n  ' + self.PUBLISHED_AT['de'] + ' ' + base_dataset.find('published').text
+
+            # More Information -> Notes
             if base_dataset.find('groups').find('group').text[0:2] == "01":
                 metadata['notes'] += '\n  ' + "[" + self.NOTES_HELPERS['de']['link_text_to_fso_population'] +\
                 "](" + self.NOTES_HELPERS['de']['link_to_fso_population'] + ")"
@@ -173,6 +184,11 @@ class FSOHarvester(HarvesterBase):
                         notes_term_translation += '\n  ' + self.NOTES_HELPERS[lang]['inquiry_period'] + ' ' +\
                         base_dataset.find('coverage').text
 
+                    # Published At -> Notes
+                    if base_dataset.find('published').text:
+                        notes_term_translation += '\n ' + self.PUBLISHED_AT['de'] + ' ' + base_dataset.find('published').text
+
+                    # More Information -> Notes
                     if base_dataset.find('groups').find('group').text[0:2] == "01":
                         notes_term_translation += '\n  ' + "[" + self.NOTES_HELPERS[lang]['link_text_to_fso_population'] +\
                         "](" + self.NOTES_HELPERS[lang]['link_to_fso_population'] + ")"
