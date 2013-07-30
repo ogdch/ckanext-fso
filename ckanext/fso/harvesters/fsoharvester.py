@@ -77,6 +77,137 @@ class FSOHarvester(HarvesterBase):
         'user': u'admin'
     }
 
+    def _file_is_available(self, url):
+        '''
+        Returns true if 200, False otherwise. (logs falses)
+        '''
+        status = urllib3.PoolManager().request('HEAD', url).status
+        if status == 200:
+            return True
+        else:
+            log.debug(str(status) + ': ' + url)
+            return False
+
+    def _generate_tags_array(self, dataset):
+        '''
+        All tags for a dataset into an array
+        '''
+        tags = []
+        for tag in dataset.find('tags').findall('tag'):
+            tags.append(tag.text)
+        return tags
+
+    def _get_dataset_group(self, dataset):
+        '''
+        Get group name based on the policy discussed with the FSO
+        '''
+        if dataset.find('groups').find('group').text[0:2] == "01":
+            return self.GROUPS['de'][0]
+        elif dataset.find('groups').find('group').text[0:2] == "17":
+            return self.GROUPS['de'][1]
+        return None
+
+    def _generate_notes(self, dataset):
+        '''
+        Concatinates all the notes pieces together into a single notes string
+        '''
+        notes = dataset.find('notes').text if dataset.find('notes').text else ''
+
+        if dataset.find('coverage').text:
+            notes += '\n  ' + self.NOTES_HELPERS['de']['inquiry_period'] + ' ' + dataset.find('coverage').text
+
+        # Published At -> Notes
+        if dataset.find('published').text:
+            notes += '\n  ' + self.PUBLISHED_AT['de'] + ' ' + dataset.find('published').text
+
+        # More Information -> Notes
+        if dataset.find('groups').find('group').text[0:2] == "01":
+            notes += '\n  ' + "[" + self.NOTES_HELPERS['de']['link_text_to_fso_population'] +\
+            "](" + self.NOTES_HELPERS['de']['link_to_fso_population'] + ")"
+
+        elif dataset.find('groups').find('group').text[0:2] == "17":
+            notes += '\n  ' + "[" + self.NOTES_HELPERS['de']['link_text_to_fso_politics'] +\
+            "](" + self.NOTES_HELPERS['de']['link_to_fso_politics'] + ")"
+        else:
+            log.debug(dataset.find('groups').find('group').text[0:2])
+
+        return notes
+
+    def _generate_term_translations(self, base_dataset, package):
+        '''
+        Return all the term_translations for a given dataset
+        '''
+        translations = []
+
+        # term translations for the groups (finite set)
+        for key, lang in self.GROUPS.iteritems():
+            for idx, group in enumerate(self.GROUPS[key]):
+                translations.append({
+                    'lang_code': key,
+                    'term': self.GROUPS['de'][idx],
+                    'term_translation': group
+                    })
+
+        for dataset in package:
+            if base_dataset.get('datasetID') != dataset.get('datasetID'):
+                lang = dataset.get('{http://www.w3.org/XML/1998/namespace}lang')
+                keys = ['title', 'author', 'maintainer']
+                for key in keys:
+                    if base_dataset.find(key).text and dataset.find(key).text:
+                        translations.append({
+                            'lang_code': lang,
+                            'term': base_dataset.find(key).text,
+                            'term_translation': dataset.find(key).text
+                            })
+
+                base_notes_translation = self._generate_notes(base_dataset)
+                other_notes_translation = self._generate_notes(dataset)
+                translations.append({
+                    'lang_code': lang,
+                    'term': base_notes_translation,
+                    'term_translation': other_notes_translation
+                    })
+
+        return translations
+
+
+    def _generate_resources(self, package):
+        '''
+        Return all resources for a given package that return a HTTP Status of 200
+        '''
+        resources = []
+        for dataset in package:
+            if self._file_is_available(dataset.find('resource').find('url').text):
+                resources.append({
+                    'url': dataset.find('resource').find('url').text,
+                    'name': dataset.find('resource').find('name').text,
+                    'format': 'XLS'
+                    })
+        return resources
+
+    def _generate_metadata(self, base_dataset, package):
+        '''
+        Return all the necessary metadata to be able to create a dataset
+        '''
+        resources = self._generate_resources(package)
+        translations = self._generate_term_translations(base_dataset, package)
+        if len(resources) != 0:
+            return {
+                'datasetID': base_dataset.get('datasetID'),
+                'title': base_dataset.find('title').text,
+                'notes': self._generate_notes(base_dataset),
+                'author': base_dataset.find('author').text,
+                'maintainer': base_dataset.find('maintainer').text,
+                'maintainer_email': base_dataset.find('maintainer_email').text,
+                'license_id': base_dataset.find('licence').text,
+                'translations': self._generate_term_translations(base_dataset, package),
+                'resources': resources,
+                'tags': self._generate_tags_array(base_dataset),
+                'groups': [self._get_dataset_group(base_dataset)]
+            }
+        else:
+            return None
+
     def info(self):
         return {
             'name': 'fso',
@@ -102,124 +233,18 @@ class FSOHarvester(HarvesterBase):
             else:
                 base_dataset = package.find('dataset')
 
-            dataset_id = base_dataset.get('datasetID')
-
-            metadata = {
-                'datasetID': dataset_id,
-                'title': base_dataset.find('title').text,
-                'notes': base_dataset.find('notes').text,
-                'author': base_dataset.find('author').text,
-                'maintainer': base_dataset.find('maintainer').text,
-                'maintainer_email': base_dataset.find('maintainer_email').text,
-                'license_id': base_dataset.find('licence').text,
-                'translations': [],
-                'resources': [],
-                'tags': [],
-                'groups': []
-            }
-
-            # Assinging tags to the dataset
-            for tag in base_dataset.find('tags').findall('tag'):
-                metadata['tags'].append(tag.text)
-
-            # Assigning a group to the dataset
-            if base_dataset.find('groups').find('group').text[0:2] == "01":
-                metadata['groups'].append(self.GROUPS['de'][0])
-            elif base_dataset.find('groups').find('group').text[0:2] == "17":
-                metadata['groups'].append(self.GROUPS['de'][1])
-
-            # Assigning notes additions
-            if base_dataset.find('notes').text == None:
-                metadata['notes'] = ''
-            if base_dataset.find('coverage').text:
-                metadata['notes'] += '\n  ' + self.NOTES_HELPERS['de']['inquiry_period'] + ' ' + base_dataset.find('coverage').text
-
-            # Published At -> Notes
-            if base_dataset.find('published').text:
-                metadata['notes'] += '\n  ' + self.PUBLISHED_AT['de'] + ' ' + base_dataset.find('published').text
-
-            # More Information -> Notes
-            if base_dataset.find('groups').find('group').text[0:2] == "01":
-                metadata['notes'] += '\n  ' + "[" + self.NOTES_HELPERS['de']['link_text_to_fso_population'] +\
-                "](" + self.NOTES_HELPERS['de']['link_to_fso_population'] + ")"
-
-            elif base_dataset.find('groups').find('group').text[0:2] == "17":
-                metadata['notes'] += '\n  ' + "[" + self.NOTES_HELPERS['de']['link_text_to_fso_politics'] +\
-                "](" + self.NOTES_HELPERS['de']['link_to_fso_politics'] + ")"
+            metadata = self._generate_metadata(base_dataset, package)
+            if metadata:
+                obj = HarvestObject(
+                    guid = base_dataset.get('datasetID'),
+                    job = harvest_job,
+                    content = json.dumps(metadata)
+                )
+                obj.save()
+                log.debug('adding ' + base_dataset.get('datasetID') + ' to the queue')
+                ids.append(obj.id)
             else:
-                log.debug(base_dataset.find('groups').find('group').text[0:2])
-
-            # Adding term translations for the groups
-            for key, lang in self.GROUPS.iteritems():
-                for idx, group in enumerate(self.GROUPS[key]):
-                    metadata['translations'].append({
-                        'lang_code': key,
-                        'term': self.GROUPS['de'][idx],
-                        'term_translation': group
-                        })
-
-
-            for dataset in package:
-                
-                # Adding resources to the dataset
-                metadata['resources'].append({
-                    'url': dataset.find('resource').find('url').text,
-                    'name': dataset.find('resource').find('name').text,
-                    'format': 'XLS'
-                    })
-
-                if dataset.get('datasetID') != base_dataset.get('datasetID'):
-                    lang = dataset.get('{http://www.w3.org/XML/1998/namespace}lang')
-
-                    # Adding term translations to the metadata
-                    keys = ['title', 'author', 'maintainer']
-                    for key in keys:
-                        if base_dataset.find(key).text and dataset.find(key).text:
-                            metadata['translations'].append({
-                                'lang_code': lang,
-                                'term': base_dataset.find(key).text,
-                                'term_translation': dataset.find(key).text
-                                })
-
-                    # Adding term translations for notes
-                    notes_term_translation = ''
-                    if base_dataset.find('notes').text and dataset.find('notes').text:
-                        notes_term_translation = dataset.find('notes').text
-
-                    if base_dataset.find('coverage').text:
-                        log.debug(base_dataset.find('coverage').text)
-
-                        notes_term_translation += '\n  ' + self.NOTES_HELPERS[lang]['inquiry_period'] + ' ' +\
-                        base_dataset.find('coverage').text
-
-                    # Published At -> Notes
-                    if base_dataset.find('published').text:
-                        notes_term_translation += '\n ' + self.PUBLISHED_AT['de'] + ' ' + base_dataset.find('published').text
-
-                    # More Information -> Notes
-                    if base_dataset.find('groups').find('group').text[0:2] == "01":
-                        notes_term_translation += '\n  ' + "[" + self.NOTES_HELPERS[lang]['link_text_to_fso_population'] +\
-                        "](" + self.NOTES_HELPERS[lang]['link_to_fso_population'] + ")"
-
-                    elif base_dataset.find('groups').find('group').text[0:2] == "17":
-                        notes_term_translation += '\n  ' + "[" + self.NOTES_HELPERS[lang]['link_text_to_fso_politics'] +\
-                        "](" + self.NOTES_HELPERS[lang]['link_to_fso_politics'] + ")"
-
-                    metadata['translations'].append({
-                        'lang_code': lang,
-                        'term': metadata['notes'],
-                        'term_translation': notes_term_translation
-                        })
-
-
-            obj = HarvestObject(
-                guid = dataset_id,
-                job = harvest_job,
-                content = json.dumps(metadata)
-            )
-            obj.save()
-            log.debug('adding ' + dataset_id + ' to the queue')
-            ids.append(obj.id)
+                log.debug('Skipping ' + base_dataset.get('datasetID') + ' since no resources are available')
 
         return ids
 
