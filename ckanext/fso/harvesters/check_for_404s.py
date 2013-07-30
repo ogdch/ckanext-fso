@@ -16,7 +16,7 @@ with open('missing_files.txt', 'w') as output_file:
 			resource = dataset.find('resource')
 			url = resource.find('url').text
 
-			request = http.request('GET', url)
-			if request.status != 200:
-				output_file.write(str(request.status) + ': ' + url + '\n')
-				print str(request.status) + ': ' + url
+			status = urllib3.PoolManager().request('HEAD', url).status
+			if status != 200:
+				output_file.write(str(status) + ': ' + url + '\n')
+				print str(status) + ': ' + url
