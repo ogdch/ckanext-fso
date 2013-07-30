@@ -4,5 +4,5 @@ from pylons import config
 
 class FsoHarvest(p.SingletonPlugin):
     """
-    Plugin containg the harvester for FSO
+    Plugin containing the harvester for FSO
     """
