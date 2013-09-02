@@ -262,6 +262,7 @@ class FSOHarvester(HarvesterBase):
             return True
         except Exception, e:
             log.exception(e)
+            raise
 
     def import_stage(self, harvest_object):
         log.debug('In FSOHarvester import_stage')
@@ -321,4 +322,5 @@ class FSOHarvester(HarvesterBase):
 
         except Exception, e:
             log.exception(e)
+            raise
         return True
