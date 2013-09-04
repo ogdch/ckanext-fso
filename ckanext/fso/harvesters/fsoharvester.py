@@ -289,6 +289,8 @@ class FSOHarvester(HarvesterBase):
 
             # Find or create group the dataset should get assigned to
             for group_name in package_dict['groups']:
+                if not group_name:
+                    return False
                 data_dict = {
                     'id': group_name,
                     'name': self._gen_new_name(group_name),
