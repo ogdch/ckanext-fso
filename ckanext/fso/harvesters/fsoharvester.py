@@ -101,10 +101,11 @@ class FSOHarvester(HarvesterBase):
         '''
         Get group name based on the policy discussed with the FSO
         '''
-        if dataset.find('groups').find('group').text[0:2] == "01":
-            return self.GROUPS['de'][0]
-        elif dataset.find('groups').find('group').text[0:2] == "17":
-            return self.GROUPS['de'][1]
+        for group_tag in dataset.find('groups').findall('group'):
+            if group_tag.text[0:2] == "01":
+                return self.GROUPS['de'][0]
+            if group_tag.text[0:2] == "17":
+                return self.GROUPS['de'][1]
         return None
 
     def _generate_notes(self, dataset):
@@ -191,7 +192,9 @@ class FSOHarvester(HarvesterBase):
         '''
         resources = self._generate_resources(package)
         translations = self._generate_term_translations(base_dataset, package)
-        if len(resources) != 0:
+        group = self._get_dataset_group(base_dataset)
+
+        if len(resources) != 0 and group:
             return {
                 'datasetID': base_dataset.get('datasetID'),
                 'title': base_dataset.find('title').text,
@@ -203,7 +206,7 @@ class FSOHarvester(HarvesterBase):
                 'translations': self._generate_term_translations(base_dataset, package),
                 'resources': resources,
                 'tags': self._generate_tags_array(base_dataset),
-                'groups': [self._get_dataset_group(base_dataset)]
+                'groups': [group]
             }
         else:
             return None
