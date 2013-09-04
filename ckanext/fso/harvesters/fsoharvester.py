@@ -286,12 +286,12 @@ class FSOHarvester(HarvesterBase):
 
             # Find or create group the dataset should get assigned to
             for group_name in package_dict['groups']:
+                data_dict = {
+                    'id': group_name,
+                    'name': self._gen_new_name(group_name),
+                    'title': group_name
+                    }
                 try:
-                    data_dict = {
-                        'id': group_name,
-                        'name': self._gen_new_name(group_name),
-                        'title': group_name
-                        }
                     group_id = get_action('group_show')(context, data_dict)['id']
                 except:
                     group = get_action('group_create')(context, data_dict)
