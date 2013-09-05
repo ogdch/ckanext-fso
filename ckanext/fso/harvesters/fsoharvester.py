@@ -247,7 +247,7 @@ class FSOHarvester(HarvesterBase):
                 log.debug('adding ' + base_dataset.get('datasetID') + ' to the queue')
                 ids.append(obj.id)
             else:
-                log.debug('Skipping ' + base_dataset.get('datasetID') + ' since no resources are available')
+                log.debug('Skipping ' + base_dataset.get('datasetID') + ' since no resources or groups are available')
 
         return ids
 
@@ -290,7 +290,7 @@ class FSOHarvester(HarvesterBase):
             # Find or create group the dataset should get assigned to
             for group_name in package_dict['groups']:
                 if not group_name:
-                    return False
+                    raise GroupNotFoundError('Group is not defined for dataset %s' % package_dict['title'])
                 data_dict = {
                     'id': group_name,
                     'name': self._gen_new_name(group_name),
@@ -329,3 +329,6 @@ class FSOHarvester(HarvesterBase):
             log.exception(e)
             raise
         return True
+
+class GroupNotFoundError(Exception):
+    pass
