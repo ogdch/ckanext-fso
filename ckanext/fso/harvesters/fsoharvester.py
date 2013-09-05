@@ -203,6 +203,7 @@ class FSOHarvester(HarvesterBase):
                 'maintainer': base_dataset.find('maintainer').text,
                 'maintainer_email': base_dataset.find('maintainer_email').text,
                 'license_id': base_dataset.find('licence').text,
+                'license_url': base_dataset.find('copyright').text,
                 'translations': self._generate_term_translations(base_dataset, package),
                 'resources': resources,
                 'tags': self._generate_tags_array(base_dataset),
@@ -314,6 +315,14 @@ class FSOHarvester(HarvesterBase):
             except:
                 organization = get_action('organization_create')(context, data_dict)
                 package_dict['owner_org'] = organization['id']
+
+
+            # Save additional metadata in extras
+            extras = []
+            if 'license_url' in package_dict:
+                extras.append(('license_url', package_dict['license_url']))
+            package_dict['extras'] = extras
+            log.debug('Extras %s' % extras) 
 
             package = model.Package.get(package_dict['id'])
             pkg_role = model.PackageRole(package=package, user=user, role=model.Role.ADMIN)
