@@ -10,7 +10,7 @@ Use `pip` to install this plugin. This example installs it in `/home/www-data`
 ```bash
 source /home/www-data/pyenv/bin/activate
 pip install -e git+https://github.com/ogdch/ckanext-fso.git#egg=ckanext-fso --src /home/www-data
-cd /home/www-data/ckanext-transharvest
+cd /home/www-data/ckanext-fso
 pip install -r pip-requirements.txt
 python setup.py develop
 ```
