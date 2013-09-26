@@ -2,12 +2,14 @@
 
 import urllib3
 from lxml import etree
+from uuid import NAMESPACE_OID, uuid4, uuid5
 
 from ckan.lib.base import c
 from ckan import model
 from ckan.model import Session, Package
 from ckan.logic import ValidationError, NotFound, get_action, action
 from ckan.lib.helpers import json
+from ckan.lib.munge import munge_title_to_name
 
 from ckanext.harvest.model import HarvestJob, HarvestObject, HarvestGatherError, \
                                     HarvestObjectError
@@ -76,6 +78,34 @@ class FSOHarvester(HarvesterBase):
     config = {
         'user': u'admin'
     }
+
+    def _create_uuid(self, name=None):
+        '''
+        Create a new SHA-1 uuid for a given name or a random id
+        '''
+        if name:
+            new_uuid = uuid5(NAMESPACE_OID, str(name))
+        else:
+            new_uuid = uuid4()
+
+        return unicode(new_uuid)
+
+    def _gen_new_name(self, title, current_id=None):
+        '''
+        Creates a URL friendly name from a title
+
+        If the name already exists, it will add some random characters at the end
+        '''
+
+        name = munge_title_to_name(title).replace('_', '-')
+        while '--' in name:
+            name = name.replace('--', '-')
+        pkg_obj = Session.query(Package).filter(Package.name == name).first()
+        if pkg_obj and pkg_obj.id != current_id:
+            return name + str(uuid4())[:5]
+        else:
+            return name 
+
 
     def _file_is_available(self, url):
         '''
@@ -240,7 +270,7 @@ class FSOHarvester(HarvesterBase):
             metadata = self._generate_metadata(base_dataset, package)
             if metadata:
                 obj = HarvestObject(
-                    guid = base_dataset.get('datasetID'),
+                    guid = self._create_uuid(base_dataset.get('datasetID')),
                     job = harvest_job,
                     content = json.dumps(metadata)
                 )
@@ -279,7 +309,7 @@ class FSOHarvester(HarvesterBase):
             package_dict = json.loads(harvest_object.content)
 
             package_dict['id'] = harvest_object.guid
-            package_dict['name'] = self._gen_new_name(package_dict['title'])
+            package_dict['name'] = self._gen_new_name(package_dict['title'], package_dict['id'])
 
             user = model.User.get(self.HARVEST_USER)
             context = {
@@ -294,7 +324,7 @@ class FSOHarvester(HarvesterBase):
                     raise GroupNotFoundError('Group is not defined for dataset %s' % package_dict['title'])
                 data_dict = {
                     'id': group_name,
-                    'name': self._gen_new_name(group_name),
+                    'name': munge_title_to_name(group_name),
                     'title': group_name
                     }
                 try:
@@ -307,8 +337,8 @@ class FSOHarvester(HarvesterBase):
             try:
                 data_dict = {
                     'permission': 'edit_group',
-                    'id': self._gen_new_name(self.ORGANIZATION['de']),
-                    'name': self._gen_new_name(self.ORGANIZATION['de']),
+                    'id': munge_title_to_name(self.ORGANIZATION['de']),
+                    'name': munge_title_to_name(self.ORGANIZATION['de']),
                     'title': self.ORGANIZATION['de']
                 }
                 package_dict['owner_org'] = get_action('organization_show')(context, data_dict)['id']
