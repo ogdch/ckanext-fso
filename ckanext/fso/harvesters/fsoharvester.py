@@ -13,12 +13,12 @@ from ckan.lib.munge import munge_title_to_name
 
 from ckanext.harvest.model import HarvestJob, HarvestObject, HarvestGatherError, \
                                     HarvestObjectError
-from ckanext.harvest.harvesters import HarvesterBase
+from base import OGDCHHarvesterBase
 
 import logging
 log = logging.getLogger(__name__)
 
-class FSOHarvester(HarvesterBase):
+class FSOHarvester(OGDCHHarvesterBase):
     '''
     The harvester for the FSO
     '''
