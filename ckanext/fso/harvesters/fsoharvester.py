@@ -27,10 +27,20 @@ class FSOHarvester(OGDCHHarvesterBase):
     FILES_BASE_URL = "http://www.bfs.admin.ch/xmlns/opendata/"
     HARVEST_USER = u'harvest'
     ORGANIZATION = {
-        'de': u'Bundesamt für Statistik',
-        'fr': u'Office fédéral de la statistique',
-        'it': u'Ufficio federale di statistica',
-        'en': u'Swiss Federal Statistical Office',
+        'de': {
+            'name': u'Bundesamt für Statistik',
+            'description': u'Orientiert über den Stand und die Entwicklung der Schweiz in zahlreichen Lebensbereichen. Es liefert die quantitativen Informationen, um die Gegenwart zu verstehen und die Zukunft zu planen.',
+            'website': u'http://www.bfs.admin.ch/'
+        },
+        'fr': {
+            'name': u'Office fédéral de la statistique',
+            'description': u'Fournit des informations sur l’état et l’évolution de la Suisse dans de nombreux domaines. Les informations qu’il produit servent à comprendre le présent et à planifier l’avenir.'},
+        'it': {
+            'name': u'Ufficio federale di statistica',
+            'description': u'Fornisce informazioni sullo stato e sull’evoluzione della Svizzera nei più svariati settori che permettono di capire il presente e pianificare il futuro.'},
+        'en': {
+            'name': u'Swiss Federal Statistical Office',
+            'description': u'Publishes information on the situation and trends in Switzerland in many different areas of life. It provides the quantitative information needed to understand the present and to plan for the future.'}
     }
     GROUPS = {
         'de': [u'Bevölkerung', u'Politik'],
@@ -104,7 +114,7 @@ class FSOHarvester(OGDCHHarvesterBase):
         if pkg_obj and pkg_obj.id != current_id:
             return name + str(uuid4())[:5]
         else:
-            return name 
+            return name
 
 
     def _file_is_available(self, url):
@@ -337,9 +347,11 @@ class FSOHarvester(OGDCHHarvesterBase):
             try:
                 data_dict = {
                     'permission': 'edit_group',
-                    'id': munge_title_to_name(self.ORGANIZATION['de']),
-                    'name': munge_title_to_name(self.ORGANIZATION['de']),
-                    'title': self.ORGANIZATION['de']
+                    'id': munge_title_to_name(self.ORGANIZATION['de']['name']),
+                    'name': munge_title_to_name(self.ORGANIZATION['de']['name']),
+                    'title': self.ORGANIZATION['de']['name'],
+                    'description': self.ORGANIZATION['de']['description'],
+                    'extras': [('website', self.ORGANIZATION['de']['website'])]
                 }
                 package_dict['owner_org'] = get_action('organization_show')(context, data_dict)['id']
             except:
@@ -352,7 +364,7 @@ class FSOHarvester(OGDCHHarvesterBase):
             if 'license_url' in package_dict:
                 extras.append(('license_url', package_dict['license_url']))
             package_dict['extras'] = extras
-            log.debug('Extras %s' % extras) 
+            log.debug('Extras %s' % extras)
 
             package = model.Package.get(package_dict['id'])
             pkg_role = model.PackageRole(package=package, user=user, role=model.Role.ADMIN)
