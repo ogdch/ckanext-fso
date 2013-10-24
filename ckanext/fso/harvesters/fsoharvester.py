@@ -351,7 +351,12 @@ class FSOHarvester(OGDCHHarvesterBase):
                     'name': munge_title_to_name(self.ORGANIZATION['de']['name']),
                     'title': self.ORGANIZATION['de']['name'],
                     'description': self.ORGANIZATION['de']['description'],
-                    'extras': [('website', self.ORGANIZATION['de']['website'])]
+                    'extras': [
+                        {
+                            'key': 'website',
+                            'value': self.ORGANIZATION['de']['website']
+                        }
+                    ]
                 }
                 package_dict['owner_org'] = get_action('organization_show')(context, data_dict)['id']
             except:
