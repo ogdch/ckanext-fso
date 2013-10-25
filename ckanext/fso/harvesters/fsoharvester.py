@@ -189,6 +189,15 @@ class FSOHarvester(OGDCHHarvesterBase):
                     'term_translation': group
                     })
 
+        for lang, org in self.ORGANIZATION.items():
+            if lang != 'de':
+                for field in ['name', 'description']:
+                    translations.append({
+                        'lang_code': lang,
+                        'term': self.ORGANIZATION['de'][field],
+                        'term_translation': org[field]
+                    })
+
         for dataset in package:
             if base_dataset.get('datasetID') != dataset.get('datasetID'):
                 lang = dataset.get('{http://www.w3.org/XML/1998/namespace}lang')
