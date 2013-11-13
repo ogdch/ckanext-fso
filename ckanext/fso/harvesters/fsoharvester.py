@@ -1,5 +1,6 @@
 #coding: utf-8
 
+import os
 import urllib3
 from lxml import etree
 from uuid import NAMESPACE_OID, uuid4, uuid5
@@ -231,9 +232,16 @@ class FSOHarvester(OGDCHHarvesterBase):
                 resources.append({
                     'url': dataset.find('resource').find('url').text,
                     'name': dataset.find('resource').find('name').text,
-                    'format': 'XLS'
+                    'format': self._guess_format(dataset.find('resource').find('name').text)
                     })
         return resources
+
+    def _guess_format(self, file_name):
+            '''
+            Return the format for a given full filename
+            '''
+            _, file_extension = os.path.splitext(file_name.lower())
+            return file_extension[1:]
 
     def _generate_metadata(self, base_dataset, package):
         '''
