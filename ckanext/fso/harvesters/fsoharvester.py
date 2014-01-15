@@ -151,29 +151,50 @@ class FSOHarvester(OGDCHHarvesterBase):
 
     def _generate_notes(self, dataset):
         '''
-        Concatinates all the notes pieces together into a single notes string
+        Concatenates all the notes pieces together into a single notes string
         '''
-        notes = dataset.find('notes').text if dataset.find('notes').text else ''
+        notes_dict = {}
+        for key in NOTES_HELPERS:
+            if dataset.find('notes').text:
+                notes = dataset.find('notes').text
+            else:
+                notes = ''
 
-        if dataset.find('coverage').text:
-            notes += '\n  ' + self.NOTES_HELPERS['de']['inquiry_period'] + ' ' + dataset.find('coverage').text
+            if dataset.find('coverage').text:
+                notes += (
+                    '\n  ' +
+                    self.NOTES_HELPERS[key]['inquiry_period'] + ' ' +
+                    dataset.find('coverage').text
+                )
 
-        # Published At -> Notes
-        if dataset.find('published').text:
-            notes += '\n  ' + self.PUBLISHED_AT['de'] + ' ' + dataset.find('published').text
+            # Published At -> Notes
+            if dataset.find('published').text:
+                notes += (
+                    '\n  ' +
+                    self.PUBLISHED_AT[key] + ' ' +
+                    dataset.find('published').text
+                )
 
-        # More Information -> Notes
-        if dataset.find('groups').find('group').text[0:2] == "01":
-            notes += '\n  ' + "[" + self.NOTES_HELPERS['de']['link_text_to_fso_population'] +\
-            "](" + self.NOTES_HELPERS['de']['link_to_fso_population'] + ")"
+            # More Information -> Notes
+            if dataset.find('groups').find('group').text[0:2] == "01":
+                notes += (
+                    '\n  ' +
+                    "[" + self.NOTES_HELPERS[key]['link_text_to_fso_population'] +
+                    "](" + self.NOTES_HELPERS[key]['link_to_fso_population'] + ")"
+                )
 
-        elif dataset.find('groups').find('group').text[0:2] == "17":
-            notes += '\n  ' + "[" + self.NOTES_HELPERS['de']['link_text_to_fso_politics'] +\
-            "](" + self.NOTES_HELPERS['de']['link_to_fso_politics'] + ")"
-        else:
-            log.debug(dataset.find('groups').find('group').text[0:2])
+            elif dataset.find('groups').find('group').text[0:2] == "17":
+                notes += (
+                    '\n  ' +
+                    "[" + self.NOTES_HELPERS[key]['link_text_to_fso_politics'] +
+                    "](" + self.NOTES_HELPERS[key]['link_to_fso_politics'] + ")"
+                )
+            else:
+                log.debug(dataset.find('groups').find('group').text[0:2])
 
-        return notes
+            notes_dict[key] = notes
+
+        return notes_dict
 
     def _generate_term_translations(self, base_dataset, package):
         '''
