@@ -60,29 +60,29 @@ class FSOHarvester(OGDCHHarvesterBase):
         'fr': {
             'link_to_fso_population': u'http://www.bfs.admin.ch/bfs/portal/fr/index/themen/01/01/keyw.html',
             'link_text_to_fso_population': u"Le sujet de la population à l'Office fédéral de la statistique",
-            'link_to_fso_politics': u'http://www.bfs.admin.ch/bfs/portal/de/index/themen/17/01/keyw.html',
+            'link_to_fso_politics': u'http://www.bfs.admin.ch/bfs/portal/fr/index/themen/17/01/keyw.html',
             'link_text_to_fso_politics': u"Le sujet de la politique à l'Office fédéral de la statistique",
             'inquiry_period': u'Période de collection'
         },
         'it': {
-            'link_to_fso_population': u'it_http://www.bfs.admin.ch/bfs/portal/de/index/themen/01/01/keyw.html',
-            'link_text_to_fso_population': u'it_Das Thema Bevölkerung im Bundesamt für Statistik',
-            'link_to_fso_politics': u'it_http://www.bfs.admin.ch/bfs/portal/de/index/themen/17/01/keyw.html',
-            'link_text_to_fso_politics': u'it_Das Thema Politik im Bundesamt für Statistik',
-            'inquiry_period': u'it_Periode der Erhebung'
+            'link_to_fso_population': u'http://www.bfs.admin.ch/bfs/portal/de/index/themen/01/01/keyw.html',
+            'link_text_to_fso_population': u'Il tema della popolazione presso l\'Ufficio federale di statistica',
+            'link_to_fso_politics': u'http://www.bfs.admin.ch/bfs/portal/de/index/themen/17/01/keyw.html',
+            'link_text_to_fso_politics': u'Il tema della politica presso l\'Ufficio federale di statistica',
+            'inquiry_period': u'Periodo di inchiesta'
         },
         'en': {
             'link_to_fso_population': u'http://www.bfs.admin.ch/bfs/portal/en/index/themen/01/01/keyw.html',
-            'link_text_to_fso_population': u'en_The topic population at the Swiss Federal Statistical Office',
-            'link_to_fso_politics': u'en_http://www.bfs.admin.ch/bfs/portal/de/index/themen/17/01/keyw.html',
-            'link_text_to_fso_politics': u'en_The topic politics at the Swiss Federal Statistical Office',
-            'inquiry_period': u'en_Inquiry period'
+            'link_text_to_fso_population': u'The topic population at the Swiss Federal Statistical Office',
+            'link_to_fso_politics': u'http://www.bfs.admin.ch/bfs/portal/de/index/themen/17/01/keyw.html',
+            'link_text_to_fso_politics': u'The topic politics at the Swiss Federal Statistical Office',
+            'inquiry_period': u'Inquiry period'
         }
     }
     PUBLISHED_AT = {
         'de': u'Veröffentlicht:',
-        'fr': u'fr_Veröffentlicht:',
-        'it': u'it_Veröffentlicht:',
+        'fr': u'Publié:',
+        'it': u'Pubblicato:',
         'en': u'Published:'
     }
 
@@ -149,52 +149,48 @@ class FSOHarvester(OGDCHHarvesterBase):
                 return self.GROUPS['de'][1]
         return None
 
-    def _generate_notes(self, dataset):
+    def _generate_notes(self, dataset, key):
         '''
         Concatenates all the notes pieces together into a single notes string
         '''
-        notes_dict = {}
-        for key in NOTES_HELPERS:
-            if dataset.find('notes').text:
-                notes = dataset.find('notes').text
-            else:
-                notes = ''
+        if dataset.find('notes').text:
+            notes = dataset.find('notes').text
+        else:
+            notes = ''
 
-            if dataset.find('coverage').text:
-                notes += (
-                    '\n  ' +
-                    self.NOTES_HELPERS[key]['inquiry_period'] + ' ' +
-                    dataset.find('coverage').text
-                )
+        if dataset.find('coverage').text:
+            notes += (
+                '\n  ' +
+                self.NOTES_HELPERS[key]['inquiry_period'] + ' ' +
+                dataset.find('coverage').text
+            )
 
-            # Published At -> Notes
-            if dataset.find('published').text:
-                notes += (
-                    '\n  ' +
-                    self.PUBLISHED_AT[key] + ' ' +
-                    dataset.find('published').text
-                )
+        # Published At -> Notes
+        if dataset.find('published').text:
+            notes += (
+                '\n  ' +
+                self.PUBLISHED_AT[key] + ' ' +
+                dataset.find('published').text
+            )
 
-            # More Information -> Notes
-            if dataset.find('groups').find('group').text[0:2] == "01":
-                notes += (
-                    '\n  ' +
-                    "[" + self.NOTES_HELPERS[key]['link_text_to_fso_population'] +
-                    "](" + self.NOTES_HELPERS[key]['link_to_fso_population'] + ")"
-                )
+        # More Information -> Notes
+        if dataset.find('groups').find('group').text[0:2] == "01":
+            notes += (
+                '\n  ' +
+                "[" + self.NOTES_HELPERS[key]['link_text_to_fso_population'] +
+                "](" + self.NOTES_HELPERS[key]['link_to_fso_population'] + ")"
+            )
 
-            elif dataset.find('groups').find('group').text[0:2] == "17":
-                notes += (
-                    '\n  ' +
-                    "[" + self.NOTES_HELPERS[key]['link_text_to_fso_politics'] +
-                    "](" + self.NOTES_HELPERS[key]['link_to_fso_politics'] + ")"
-                )
-            else:
-                log.debug(dataset.find('groups').find('group').text[0:2])
+        elif dataset.find('groups').find('group').text[0:2] == "17":
+            notes += (
+                '\n  ' +
+                "[" + self.NOTES_HELPERS[key]['link_text_to_fso_politics'] +
+                "](" + self.NOTES_HELPERS[key]['link_to_fso_politics'] + ")"
+            )
+        else:
+            log.debug(dataset.find('groups').find('group').text[0:2])
 
-            notes_dict[key] = notes
-
-        return notes_dict
+        return notes
 
     def _generate_term_translations(self, base_dataset, package):
         '''
@@ -232,8 +228,8 @@ class FSOHarvester(OGDCHHarvesterBase):
                             'term_translation': dataset.find(key).text
                             })
 
-                base_notes_translation = self._generate_notes(base_dataset)
-                other_notes_translation = self._generate_notes(dataset)
+                base_notes_translation = self._generate_notes(base_dataset, 'de')
+                other_notes_translation = self._generate_notes(dataset, lang)
                 translations.append({
                     'lang_code': lang,
                     'term': base_notes_translation,
@@ -276,7 +272,7 @@ class FSOHarvester(OGDCHHarvesterBase):
             return {
                 'datasetID': base_dataset.get('datasetID'),
                 'title': base_dataset.find('title').text,
-                'notes': self._generate_notes(base_dataset),
+                'notes': self._generate_notes(base_dataset, 'de'),
                 'author': base_dataset.find('author').text,
                 'maintainer': base_dataset.find('maintainer').text,
                 'maintainer_email': base_dataset.find('maintainer_email').text,
@@ -299,7 +295,7 @@ class FSOHarvester(OGDCHHarvesterBase):
         }
 
     def gather_stage(self, harvest_job):
-        log.debug('In FSOHarvester gather_stage')
+        log.debug('In FSOHarvester gather_stage, _generate_notes takes language key')
 
         http = urllib3.PoolManager()
         metadata_file = http.request('GET', self.METADATA_FILE_URL)
@@ -347,7 +343,7 @@ class FSOHarvester(OGDCHHarvesterBase):
             raise
 
     def import_stage(self, harvest_object):
-        log.debug('In FSOHarvester import_stage')
+        log.debug('In FSOHarvester import_stage, _generate_notes takes language key')
 
         if not harvest_object:
             log.error('No harvest object received')
