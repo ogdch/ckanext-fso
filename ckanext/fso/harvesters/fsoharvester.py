@@ -218,23 +218,23 @@ class FSOHarvester(OGDCHHarvesterBase):
 
         for dataset in package:
             if base_dataset.get('datasetID') != dataset.get('datasetID'):
-                lang = dataset.get('{http://www.w3.org/XML/1998/namespace}lang')
-                keys = ['title', 'author', 'maintainer']
-                for key in keys:
-                    if base_dataset.find(key).text and dataset.find(key).text:
-                        translations.append({
-                            'lang_code': lang,
-                            'term': base_dataset.find(key).text,
-                            'term_translation': dataset.find(key).text
-                            })
+                for lang in self.NOTES_HELPERS:
+                    keys = ['title', 'author', 'maintainer']
+                    for key in keys:
+                        if base_dataset.find(key).text and dataset.find(key).text:
+                            translations.append({
+                                'lang_code': lang,
+                                'term': base_dataset.find(key).text,
+                                'term_translation': dataset.find(key).text
+                                })
 
-                base_notes_translation = self._generate_notes(base_dataset, 'de')
-                other_notes_translation = self._generate_notes(dataset, lang)
-                translations.append({
-                    'lang_code': lang,
-                    'term': base_notes_translation,
-                    'term_translation': other_notes_translation
-                    })
+                    base_notes_translation = self._generate_notes(base_dataset, 'de')
+                    other_notes_translation = self._generate_notes(dataset, lang)
+                    translations.append({
+                        'lang_code': lang,
+                        'term': base_notes_translation,
+                        'term_translation': other_notes_translation
+                        })
 
         return translations
 
@@ -295,7 +295,7 @@ class FSOHarvester(OGDCHHarvesterBase):
         }
 
     def gather_stage(self, harvest_job):
-        log.debug('In FSOHarvester gather_stage, _generate_notes takes language key')
+        log.debug('In FSOHarvester gather_stage')
 
         http = urllib3.PoolManager()
         metadata_file = http.request('GET', self.METADATA_FILE_URL)
@@ -343,7 +343,7 @@ class FSOHarvester(OGDCHHarvesterBase):
             raise
 
     def import_stage(self, harvest_object):
-        log.debug('In FSOHarvester import_stage, _generate_notes takes language key')
+        log.debug('In FSOHarvester import_stage')
 
         if not harvest_object:
             log.error('No harvest object received')
