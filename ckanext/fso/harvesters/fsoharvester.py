@@ -218,23 +218,25 @@ class FSOHarvester(OGDCHHarvesterBase):
 
         for dataset in package:
             if base_dataset.get('datasetID') != dataset.get('datasetID'):
-                for lang in self.NOTES_HELPERS:
-                    keys = ['title', 'author', 'maintainer']
-                    for key in keys:
-                        if base_dataset.find(key).text and dataset.find(key).text:
-                            translations.append({
-                                'lang_code': lang,
-                                'term': base_dataset.find(key).text,
-                                'term_translation': dataset.find(key).text
-                                })
+                lang = dataset.get('{http://www.w3.org/XML/1998/namespace}lang')
+                keys = ['title', 'author', 'maintainer']
+                for key in keys:
+                    if base_dataset.find(key).text and dataset.find(key).text:
+                        translations.append({
+                            'lang_code': lang,
+                            'term': base_dataset.find(key).text,
+                            'term_translation': dataset.find(key).text
+                            })
 
-                    base_notes_translation = self._generate_notes(base_dataset, 'de')
-                    other_notes_translation = self._generate_notes(dataset, lang)
-                    translations.append({
-                        'lang_code': lang,
-                        'term': base_notes_translation,
-                        'term_translation': other_notes_translation
-                        })
+                for lang in self.NOTES_HELPERS:
+                    if lang != 'de':
+                        base_notes_translation = self._generate_notes(base_dataset, 'de')
+                        other_notes_translation = self._generate_notes(dataset, lang)
+                        translations.append({
+                            'lang_code': lang,
+                            'term': base_notes_translation,
+                            'term_translation': other_notes_translation
+                            })
 
         return translations
 
