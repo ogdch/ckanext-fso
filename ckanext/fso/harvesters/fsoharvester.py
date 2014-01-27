@@ -100,7 +100,7 @@ class FSOHarvester(OGDCHHarvesterBase):
                 u"fédéral de la statistique"
             ),
             'link_to_fso_politics': (
-                u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
+                u'http://www.bfs.admin.ch/bfs/portal/fr/index/themen'
                 u'/17/01/keyw.html'
             ),
             'link_text_to_fso_politics': (
@@ -111,20 +111,22 @@ class FSOHarvester(OGDCHHarvesterBase):
         },
         'it': {
             'link_to_fso_population': (
-                u'it_http://www.bfs.admin.ch/bfs/portal/de/index/themen'
+                u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
                 u'/01/01/keyw.html'
             ),
             'link_text_to_fso_population': (
-                u'it_Das Thema Bevölkerung im Bundesamt für Statistik'
+                u'Il tema della popolazione presso l\'Ufficio '
+                u'federale di statistica'
             ),
             'link_to_fso_politics': (
-                u'it_http://www.bfs.admin.ch/bfs/portal/de/index/themen'
+                u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
                 u'/17/01/keyw.html'
             ),
             'link_text_to_fso_politics': (
-                u'it_Das Thema Politik im Bundesamt für Statistik'
+                u'Il tema della politica presso l\'Ufficio '
+                u'federale di statistica'
             ),
-            'inquiry_period': u'it_Periode der Erhebung'
+            'inquiry_period': u'Periodo di inchiesta'
         },
         'en': {
             'link_to_fso_population': (
@@ -132,24 +134,24 @@ class FSOHarvester(OGDCHHarvesterBase):
                 u'/01/01/keyw.html'
             ),
             'link_text_to_fso_population': (
-                u'en_The topic population at the Swiss Federal '
+                u'The topic population at the Swiss Federal '
                 u'Statistical Office'
             ),
             'link_to_fso_politics': (
-                u'en_http://www.bfs.admin.ch/bfs/portal/de/index/themen'
+                u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
                 u'/17/01/keyw.html'
             ),
             'link_text_to_fso_politics': (
-                u'en_The topic politics at the Swiss Federal '
+                u'The topic politics at the Swiss Federal '
                 u'Statistical Office'
             ),
-            'inquiry_period': u'en_Inquiry period'
+            'inquiry_period': u'Inquiry period'
         }
     }
     PUBLISHED_AT = {
         'de': u'Veröffentlicht:',
-        'fr': u'fr_Veröffentlicht:',
-        'it': u'it_Veröffentlicht:',
+        'fr': u'Publié:',
+        'it': u'Pubblicato:',
         'en': u'Published:'
     }
 
@@ -216,9 +218,9 @@ class FSOHarvester(OGDCHHarvesterBase):
                 return self.GROUPS['de'][1]
         return None
 
-    def _generate_notes(self, dataset):
+    def _generate_notes(self, dataset, key):
         '''
-        Concatinates all the notes pieces together into a single notes string
+        Concatenates all the notes pieces together into a single notes string
         '''
         if dataset.find('notes').text:
             notes = dataset.find('notes').text
@@ -228,7 +230,7 @@ class FSOHarvester(OGDCHHarvesterBase):
         if dataset.find('coverage').text:
             notes += (
                 '\n  ' +
-                self.NOTES_HELPERS['de']['inquiry_period'] + ' ' +
+                self.NOTES_HELPERS[key]['inquiry_period'] + ' ' +
                 dataset.find('coverage').text
             )
 
@@ -236,7 +238,7 @@ class FSOHarvester(OGDCHHarvesterBase):
         if dataset.find('published').text:
             notes += (
                 '\n  ' +
-                self.PUBLISHED_AT['de'] + ' ' +
+                self.PUBLISHED_AT[key] + ' ' +
                 dataset.find('published').text
             )
 
@@ -244,15 +246,15 @@ class FSOHarvester(OGDCHHarvesterBase):
         if dataset.find('groups').find('group').text[0:2] == "01":
             notes += (
                 '\n  ' +
-                "[" + self.NOTES_HELPERS['de']['link_text_to_fso_population'] +
-                "](" + self.NOTES_HELPERS['de']['link_to_fso_population'] + ")"
+                "[" + self.NOTES_HELPERS[key]['link_text_to_fso_population'] +
+                "](" + self.NOTES_HELPERS[key]['link_to_fso_population'] + ")"
             )
 
         elif dataset.find('groups').find('group').text[0:2] == "17":
             notes += (
                 '\n  ' +
-                "[" + self.NOTES_HELPERS['de']['link_text_to_fso_politics'] +
-                "](" + self.NOTES_HELPERS['de']['link_to_fso_politics'] + ")"
+                "[" + self.NOTES_HELPERS[key]['link_text_to_fso_politics'] +
+                "](" + self.NOTES_HELPERS[key]['link_to_fso_politics'] + ")"
             )
         else:
             log.debug(dataset.find('groups').find('group').text[0:2])
@@ -297,13 +299,15 @@ class FSOHarvester(OGDCHHarvesterBase):
                             'term_translation': dataset.find(key).text
                             })
 
-                base_notes_translation = self._generate_notes(base_dataset)
-                other_notes_translation = self._generate_notes(dataset)
-                translations.append({
-                    'lang_code': lang,
-                    'term': base_notes_translation,
-                    'term_translation': other_notes_translation
-                    })
+                for lang in self.NOTES_HELPERS:
+                    if lang != 'de':
+                        base_notes_translation = self._generate_notes(base_dataset, 'de')
+                        other_notes_translation = self._generate_notes(dataset, lang)
+                        translations.append({
+                            'lang_code': lang,
+                            'term': base_notes_translation,
+                            'term_translation': other_notes_translation
+                            })
 
         return translations
 
@@ -346,7 +350,7 @@ class FSOHarvester(OGDCHHarvesterBase):
             return {
                 'datasetID': base_dataset.get('datasetID'),
                 'title': base_dataset.find('title').text,
-                'notes': self._generate_notes(base_dataset),
+                'notes': self._generate_notes(base_dataset, 'de'),
                 'author': base_dataset.find('author').text,
                 'maintainer': base_dataset.find('maintainer').text,
                 'maintainer_email': base_dataset.find('maintainer_email').text,
