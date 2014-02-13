@@ -43,10 +43,10 @@ class FSOHarvester(OGDCHHarvesterBase):
             'description': u'Publishes information on the situation and trends in Switzerland in many different areas of life. It provides the quantitative information needed to understand the present and to plan for the future.'}
     }
     GROUPS = {
-        'de': [u'Bevölkerung', u'Politik'],
-        'fr': [u'Population', u'Politique'],
-        'it': [u'Popolazione', u'Politica'],
-        'en': [u'Population', u'Politics']
+        'de': [u'Bevölkerung', u'Politik', u'Statistische Grundlagen und Übersichten', u'Gesundheit'],
+        'fr': [u'Population', u'Politique', u'Bases statistiques et généralités', u'Santé'],
+        'it': [u'Popolazione', u'Politica', u'Basi statistiche e presentazioni generali', u'Salute'],
+        'en': [u'Population', u'Politics', u'Statistical basis and overviews', u'Health']
     }
     NOTES_HELPERS = {
         'de': {
@@ -146,6 +146,10 @@ class FSOHarvester(OGDCHHarvesterBase):
                 return self.GROUPS['de'][0]
             if group_tag.text[0:2] == "17":
                 return self.GROUPS['de'][1]
+            if group_tag.text[0:2] == "00":
+                return self.GROUPS['de'][2]
+            if group_tag.text[0:2] == "14":
+                return self.GROUPS['de'][3]
         return None
 
     def _generate_notes(self, dataset):
