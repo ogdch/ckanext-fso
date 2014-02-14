@@ -301,8 +301,14 @@ class FSOHarvester(OGDCHHarvesterBase):
 
                 for lang in self.NOTES_HELPERS:
                     if lang != 'de':
-                        base_notes_translation = self._generate_notes(base_dataset, 'de')
-                        other_notes_translation = self._generate_notes(dataset, lang)
+                        base_notes_translation = self._generate_notes(
+                            base_dataset,
+                            'de'
+                        )
+                        other_notes_translation = self._generate_notes(
+                            dataset,
+                            lang
+                        )
                         translations.append({
                             'lang_code': lang,
                             'term': base_notes_translation,
