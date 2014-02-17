@@ -81,14 +81,14 @@ class FSOHarvester(OGDCHHarvesterBase):
             'link_text_to_fso_population': (
                 u'Das Thema Bevölkerung im Bundesamt für Statistik'
             ),
-			'link_to_fso_health': (
+	    'link_to_fso_health': (
                 u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
                 u'/14/01/keyw.html'
             ),
             'link_text_to_fso_health': (
                 u'Das Thema Gesundheit im Bundesamt für Statistik'
             ),
-			'link_to_fso_basis': (
+            'link_to_fso_basis': (
                 u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
                 u'/00.html'
             ),
@@ -113,14 +113,14 @@ class FSOHarvester(OGDCHHarvesterBase):
                 u"Le sujet de la population à l'Office "
                 u"fédéral de la statistique"
             ),
-			'link_to_fso_health': (
+	    'link_to_fso_health': (
                 u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
                 u'/14/01/keyw.html'
             ),
             'link_text_to_fso_health': (
                 u'Das Thema Gesundheit im Bundesamt für Statistik'
             ),
-			'link_to_fso_basis': (
+	    'link_to_fso_basis': (
                 u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
                 u'/00.html'
             ),
@@ -146,14 +146,14 @@ class FSOHarvester(OGDCHHarvesterBase):
                 u'Il tema della popolazione presso l\'Ufficio '
                 u'federale di statistica'
             ),
-			'link_to_fso_health': (
+	    'link_to_fso_health': (
                 u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
                 u'/14/01/keyw.html'
             ),
             'link_text_to_fso_health': (
                 u'Das Thema Gesundheit im Bundesamt für Statistik'
             ),
-			'link_to_fso_basis': (
+	    'link_to_fso_basis': (
                 u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
                 u'/00.html'
             ),
@@ -179,14 +179,14 @@ class FSOHarvester(OGDCHHarvesterBase):
                 u'The topic population at the Swiss Federal '
                 u'Statistical Office'
             ),
-			'link_to_fso_health': (
+	    'link_to_fso_health': (
                 u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
                 u'/14/01/keyw.html'
             ),
             'link_text_to_fso_health': (
                 u'Das Thema Gesundheit im Bundesamt für Statistik'
             ),
-			'link_to_fso_basis': (
+	    'link_to_fso_basis': (
                 u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
                 u'/00.html'
             ),
