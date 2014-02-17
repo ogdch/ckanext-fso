@@ -272,9 +272,9 @@ class FSOHarvester(OGDCHHarvesterBase):
                 return self.GROUPS['de'][0]
             if group_tag.text[0:2] == "17":
                 return self.GROUPS['de'][1]
-			if group_tag.text[0:2] == "00":
+	    if group_tag.text[0:2] == "00":
                 return self.GROUPS['de'][2]
-			if group_tag.text[0:2] == "14":
+	    if group_tag.text[0:2] == "14":
                 return self.GROUPS['de'][3]
         return None
 
@@ -317,7 +317,7 @@ class FSOHarvester(OGDCHHarvesterBase):
                 "](" + self.NOTES_HELPERS[key]['link_to_fso_politics'] + ")"
             )
         
-		if dataset.find('groups').find('group').text[0:2] == "00":
+	if dataset.find('groups').find('group').text[0:2] == "00":
             notes += (
                 '\n  ' +
                 "[" + self.NOTES_HELPERS[key]['link_text_to_fso_basis'] +
