@@ -68,9 +68,9 @@ class FSOHarvester(OGDCHHarvesterBase):
     }
     GROUPS = {
         'de': [u'Bevölkerung', u'Politik', u'Statistische Grundlagen und Übersichten', u'Gesundheit'],
-		'fr': [u'Population', u'Politique', u'Bases statistiques et généralités', u'Santé'],
-		'it': [u'Popolazione', u'Politica', u'Basi statistiche e presentazioni generali', u'Salute'],
-		'en': [u'Population', u'Politics', u'Statistical basis and overviews', u'Health']
+	'fr': [u'Population', u'Politique', u'Bases statistiques et généralités', u'Santé'],
+	'it': [u'Popolazione', u'Politica', u'Basi statistiche e presentazioni generali', u'Salute'],
+	'en': [u'Population', u'Politics', u'Statistical basis and overviews', u'Health']
     }
     NOTES_HELPERS = {
         'de': {
