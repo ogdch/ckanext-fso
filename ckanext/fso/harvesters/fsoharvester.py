@@ -67,10 +67,14 @@ class FSOHarvester(OGDCHHarvesterBase):
         }
     }
     GROUPS = {
-        'de': [u'Bevölkerung', u'Politik'],
-        'fr': [u'Population', u'Politique'],
-        'it': [u'Popolazione', u'Politica'],
-        'en': [u'Population', u'Politics']
+        'de': [u'Bevölkerung', u'Politik',
+               u'Statistische Grundlagen und Übersichten', u'Gesundheit'],
+        'fr': [u'Population', u'Politique',
+               u'Bases statistiques et généralités', u'Santé'],
+        'it': [u'Popolazione', u'Politica',
+               u'Basi statistiche e presentazioni generali', u'Salute'],
+        'en': [u'Population', u'Politics',
+               u'Statistical basis and overviews', u'Health']
     }
     NOTES_HELPERS = {
         'de': {
@@ -80,6 +84,21 @@ class FSOHarvester(OGDCHHarvesterBase):
             ),
             'link_text_to_fso_population': (
                 u'Das Thema Bevölkerung im Bundesamt für Statistik'
+            ),
+            'link_to_fso_health': (
+                u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
+                u'/14/01/keyw.html'
+            ),
+            'link_text_to_fso_health': (
+                u'Das Thema Gesundheit im Bundesamt für Statistik'
+            ),
+            'link_to_fso_basis': (
+                u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
+                u'/00.html'
+            ),
+            'link_text_to_fso_basis': (
+                u'Das Thema Grundlagen und Übersichten '
+                u'im Bundesamt für Statistik'
             ),
             'link_to_fso_politics': (
                 u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
@@ -99,6 +118,22 @@ class FSOHarvester(OGDCHHarvesterBase):
                 u"Le sujet de la population à l'Office "
                 u"fédéral de la statistique"
             ),
+            'link_to_fso_health': (
+                u'http://www.bfs.admin.ch/bfs/portal/fr/index/themen'
+                u'/14/01/keyw.html'
+            ),
+            'link_text_to_fso_health': (
+                u"Le sujet de la santé à l'Office "
+                u"fédéral de la statistique"
+            ),
+            'link_to_fso_basis': (
+                u'http://www.bfs.admin.ch/bfs/portal/fr/index/themen'
+                u'/00.html'
+            ),
+            'link_text_to_fso_basis': (
+                u"Le sujet des bases statistiques et généralités "
+                u"à l'Office fédéral de la statistique"
+            ),
             'link_to_fso_politics': (
                 u'http://www.bfs.admin.ch/bfs/portal/fr/index/themen'
                 u'/17/01/keyw.html'
@@ -112,15 +147,31 @@ class FSOHarvester(OGDCHHarvesterBase):
         'it': {
             'link_to_fso_population': (
                 u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
-                u'/01/01/keyw.html'
+                u'/01.html'
             ),
             'link_text_to_fso_population': (
                 u'Il tema della popolazione presso l\'Ufficio '
                 u'federale di statistica'
             ),
-            'link_to_fso_politics': (
+            'link_to_fso_health': (
                 u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
-                u'/17/01/keyw.html'
+                u'/14/01/keyw.html'
+            ),
+            'link_text_to_fso_health': (
+                u'Il tema della salute presso l\'Ufficio '
+                u'federale di statistica'
+            ),
+            'link_to_fso_basis': (
+                u'http://www.bfs.admin.ch/bfs/portal/it/index/themen'
+                u'/00.html'
+            ),
+            'link_text_to_fso_basis': (
+                u'Il tema delle basi statistiche e panoramica '
+                u'presso l\'Ufficio federale di statistica'
+            ),
+            'link_to_fso_politics': (
+                u'http://www.bfs.admin.ch/bfs/portal/it/index/themen'
+                u'/17.html'
             ),
             'link_text_to_fso_politics': (
                 u'Il tema della politica presso l\'Ufficio '
@@ -135,6 +186,22 @@ class FSOHarvester(OGDCHHarvesterBase):
             ),
             'link_text_to_fso_population': (
                 u'The topic population at the Swiss Federal '
+                u'Statistical Office'
+            ),
+            'link_to_fso_health': (
+                u'http://www.bfs.admin.ch/bfs/portal/en/index/themen/'
+                u'/14.html'
+            ),
+            'link_text_to_fso_health': (
+                u'The topic health at the Swiss Federal '
+                u'Statistical Office'
+            ),
+            'link_to_fso_basis': (
+                u'http://www.bfs.admin.ch/bfs/portal/en/index/themen'
+                u'/00.html'
+            ),
+            'link_text_to_fso_basis': (
+                u'The topic health at the Swiss Federal '
                 u'Statistical Office'
             ),
             'link_to_fso_politics': (
@@ -216,6 +283,10 @@ class FSOHarvester(OGDCHHarvesterBase):
                 return self.GROUPS['de'][0]
             if group_tag.text[0:2] == "17":
                 return self.GROUPS['de'][1]
+            if group_tag.text[0:2] == "00":
+                return self.GROUPS['de'][2]
+            if group_tag.text[0:2] == "14":
+                return self.GROUPS['de'][3]
         return None
 
     def _generate_notes(self, dataset, key):
@@ -250,12 +321,27 @@ class FSOHarvester(OGDCHHarvesterBase):
                 "](" + self.NOTES_HELPERS[key]['link_to_fso_population'] + ")"
             )
 
-        elif dataset.find('groups').find('group').text[0:2] == "17":
+        if dataset.find('groups').find('group').text[0:2] == "17":
             notes += (
                 '\n  ' +
                 "[" + self.NOTES_HELPERS[key]['link_text_to_fso_politics'] +
                 "](" + self.NOTES_HELPERS[key]['link_to_fso_politics'] + ")"
             )
+
+        if dataset.find('groups').find('group').text[0:2] == "14":
+            notes += (
+                '\n  ' +
+                "[" + self.NOTES_HELPERS[key]['link_text_to_fso_health'] +
+                "](" + self.NOTES_HELPERS[key]['link_to_fso_health'] + ")"
+            )
+
+        if dataset.find('groups').find('group').text[0:2] == "00":
+            notes += (
+                '\n  ' +
+                "[" + self.NOTES_HELPERS[key]['link_text_to_fso_basis'] +
+                "](" + self.NOTES_HELPERS[key]['link_to_fso_basis'] + ")"
+            )
+
         else:
             log.debug(dataset.find('groups').find('group').text[0:2])
 
