@@ -166,8 +166,8 @@ class FSOHarvester(OGDCHHarvesterBase):
                 u'/00.html'
             ),
             'link_text_to_fso_basis': (
-                u'Il tema delle basi statistiche e panoramica '
-                u'presso l\'Ufficio federale di statistica'
+                u'Il tema delle basi statistiche e presentazioni '
+                u'generali presso l\'Ufficio federale di statistica'
             ),
             'link_to_fso_politics': (
                 u'http://www.bfs.admin.ch/bfs/portal/it/index/themen'
@@ -193,16 +193,16 @@ class FSOHarvester(OGDCHHarvesterBase):
                 u'/14.html'
             ),
             'link_text_to_fso_health': (
-                u'The topic health at the Swiss Federal '
-                u'Statistical Office'
+                u'The topic health '
+                u'at the Swiss Federal Statistical Office'
             ),
             'link_to_fso_basis': (
                 u'http://www.bfs.admin.ch/bfs/portal/en/index/themen'
                 u'/00.html'
             ),
             'link_text_to_fso_basis': (
-                u'The topic health at the Swiss Federal '
-                u'Statistical Office'
+                u'The topic statistical basis and overviews '
+                u'at the Swiss Federal Statistical Office'
             ),
             'link_to_fso_politics': (
                 u'http://www.bfs.admin.ch/bfs/portal/de/index/themen'
