@@ -1,5 +1,5 @@
 # This file lists the dependencies of this extension.
 # Install with a command like: pip install -r pip-requirements.txt
-lxml==2.2.4
+lxml==4.6.5
 urllib3==1.6.0
 flake8==2.1.0
